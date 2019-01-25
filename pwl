@@ -1,0 +1,218 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+""" Pass Word Locker
+Author: sbassett@wikimedia.org
+License: ISC
+"""
+
+import argparse
+import base64
+import os
+import secrets
+
+from Crypto.Cipher import AES
+from Crypto.Random import get_random_bytes
+
+
+class PWL:
+    """ Pass Word Locker """
+    def __init__(self):
+        """ Constructor """
+        self.pwl_length = 16
+        self.pwl_file_name = '.8swV65BXefyU5E7vSJcNvg'
+        self.terminal_width = 120
+        self.col_one_width = 28
+        self.col_two_width = 28
+        self.col_three_width = 60
+        self.enc_dec_key = 0
+        self.encoding = 'utf8'
+
+        self.check_pwl_file_name()
+
+    def suggest_pwl_file_names(self):
+        """ Suggest pwl file names """
+        print("Set one of these as the 'self.file_name' variable in script_init():\n")
+        print("(They're just random 16-char alnum strings from)\n")
+        for i in range(self.pwl_length):
+            print('.', end='')
+            print(secrets.token_urlsafe(self.pwl_length))
+
+    def check_pwl_file_name(self):
+        """ Check if pwl file exists, if not create it """
+        if(not os.path.isfile(self.pwl_file_name) or
+           os.stat(self.pwl_file_name).st_size == 0):
+            self.prompt_for_pwl_key()
+            self.enc_pwl_file_data('')
+
+    def print_pwl_header(self):
+        """ Print header (28, 28, 60) """
+        self.print_pwl_hr('=')
+        print('|   Asset ', end='')
+        print(' ' * (self.col_one_width - 9), end='')
+        print('| User ', end='')
+        print(' ' * (self.col_two_width - 6), end='') 
+        print('| Password ', end='')
+        print(' ' * (self.col_three_width - 10), end='')
+        print('|')
+        self.print_pwl_hr('=')
+
+    def print_pwl_hr(self, char='-'):
+        """ Print horizontal rule """
+        print(char * self.terminal_width) 
+
+    def prompt_for_pwl_key(self):
+        """ Prompt user for key for enc/dec """
+        self.enc_dec_key = input('Please enter a valid key: ')
+        if(len(self.enc_dec_key) > self.pwl_length):
+            raise ValueError("Key length is more than 16 characters!")
+        else:
+            self.enc_dec_key = self.enc_dec_key.strip()\
+                .rjust(self.pwl_length)\
+                .encode(self.encoding)
+
+    def prompt_for_input(self, msg='please enter a value: '):
+       """ Generic CLI user input prompt """
+       input_data = input(msg)
+       return str(input_data).strip()
+
+    def enc_pwl_file_data(self, data):
+        """ Encrypt str data """
+        key = self.enc_dec_key
+        cipher = AES.new(key, AES.MODE_EAX)
+        ciphertext, tag = cipher.encrypt_and_digest(
+            data.encode(self.encoding)
+        )
+        file_out = open(self.pwl_file_name, "wb")
+        [ file_out.write(x) for x in (cipher.nonce, tag, ciphertext) ]
+
+    def dec_pwl_file_data(self):
+        """ Decrypt str data """
+        file_in = open(self.pwl_file_name, "rb")
+        nonce, tag, ciphertext = [ file_in.read(x) for x in (
+            self.pwl_length, self.pwl_length, -1
+        ) ]
+        cipher = AES.new(self.enc_dec_key, AES.MODE_EAX, nonce)
+        return cipher.decrypt_and_verify(ciphertext, tag) \
+            .decode(self.encoding)
+
+    def display_pwl_file_data(self):
+       """ Display pwl file data (-l) """
+       self.prompt_for_pwl_key()
+       self.print_pwl_header()
+
+       count = 1
+       display_data = self.dec_pwl_file_data().split('\n')
+       for line in display_data:
+           if(len(line) > 0):
+               shim = ''
+               if(count < 10):
+                   shim = ' '
+               # FIXME: obvs this will break any strs w/ ||| in them
+               print(line.replace('|||', ''.join([shim, str(count), ')'])))
+               self.print_pwl_hr()
+               count += 1
+
+    def edit_pwl_file_line(self, line_num):
+       """ Edit pwl file line (-e #) """
+       self.prompt_for_pwl_key()
+       current_file_data = self.dec_pwl_file_data().split('\n')
+
+       count = 1
+       found = 0
+       for line in current_file_data:
+            if(int(line_num) == count):
+                asset = self.prompt_for_input('Please enter an Asset: ')
+                while(len(asset) > self.col_one_width):
+                    asset = self.prompt_for_input('Please enter a shorter length Asset: ')
+ 
+                user = self.prompt_for_input('Please enter a User: ')
+                while(len(user) > self.col_two_width):
+                    user = self.prompt_for_input('Please enter a shorter length User: ')
+
+                password = self.prompt_for_input('Please enter a Password: ')
+                while(len(password) > self.col_three_width):
+                    password = self.prompt_for_input('Please enter a shorter length Password: ') 
+
+                new_file_data = ''.join([
+                    '||| ',
+                    asset,
+                    (' ' * (self.col_one_width - len(asset) - 3)),
+                    '| ',
+                    user,
+                    (' ' * (self.col_two_width - len(user) - 1)),
+                    '| ',
+                    password,
+                    (' ' * (self.col_three_width - len(password) - 1)),
+                    '|'
+                    '\n'])
+
+                current_file_data[count - 1] = new_file_data
+                found = count
+            count += 1
+
+       self.enc_pwl_file_data('\n'.join(current_file_data))
+       print(''.join(['Entry # ', str(found), ' has been changed.']))
+
+    def delete_pwl_file_line(self, line_num):
+       """ Delete pwl file line (-d #) """
+       self.prompt_for_pwl_key()
+
+    def add_pwl_file_line(self):
+       """ Add a new pwl file line (-a) """
+       self.prompt_for_pwl_key()
+       asset = self.prompt_for_input('Please enter an Asset: ')
+       while(len(asset) > self.col_one_width):
+           asset = self.prompt_for_input('Please enter a shorter length Asset: ')
+
+       user = self.prompt_for_input('Please enter a User: ')
+       while(len(user) > self.col_two_width): 
+           user = self.prompt_for_input('Please enter a shorter length User: ')
+
+       password = self.prompt_for_input('Please enter a Password: ')
+       while(len(password) > self.col_three_width):
+           password = self.prompt_for_input('Please enter a shorter length Password: ') 
+
+       current_file_data = self.dec_pwl_file_data()
+       new_file_data = ''.join([
+          '||| ',
+          asset,
+          (' ' * (self.col_one_width - len(asset) - 3)),
+          '| ',
+          user,
+          (' ' * (self.col_two_width - len(user) - 1)),
+          '| ',
+          password,
+          (' ' * (self.col_three_width - len(password) - 1)),
+          '|'
+          '\n'])
+       self.enc_pwl_file_data(''.join([current_file_data, new_file_data]))
+
+
+if __name__ == "__main__":
+    """ Run PWL """
+    pwl = PWL()
+
+    """ Args """
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-l', '--list', default='',
+                        action='store_true',
+                        help='list pwl file contents')
+    parser.add_argument('-e', '--edit', default='',
+                        help='edit a pwl file line')
+    parser.add_argument('-d', '--delete', default='',
+                        help='delete a pwl file line')
+    parser.add_argument('-a', '--add', default='',
+                        action='store_true',
+                        help='add a pwl file line')
+    args, unknown = parser.parse_known_args()
+
+    if args.list:
+        pwl.display_pwl_file_data()
+    elif args.edit:
+        pwl.edit_pwl_file_line(args.edit)
+    elif args.delete:
+        pwl.delete_pwl_file_line(args.delete)
+    elif args.add:
+        pwl.add_pwl_file_line()
+    else:
+        parser.print_help()
