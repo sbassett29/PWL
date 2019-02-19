@@ -1,8 +1,8 @@
 # PWL
 
-A generic password locker for the console written in Python3.  It supports a few different commands (list, add, edit, delete - see ```./pwl -h```) and stores all data within an AES blob (EAX mode).
+A generic, super-slim password locker for the console written in Python3.  It supports a few different commands (list, add, edit, delete - see ```./pwl -h```) and stores all data within an AES blob (EAX mode).
 
-Why did you write this?  What's wrong with ```keepass``` or ```pass```?
+Why did you write this?  What's wrong with [keepassx](https://github.com/keepassx/keepassx) or [pass](https://github.com/zhangkun83/password-store)?
 
 ...
 
