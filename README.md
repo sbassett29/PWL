@@ -17,7 +17,7 @@ Python 3 stdlib
 * subprocess 
 * time
 
-[pycryptodome](https://www.pycryptodome.org/en/latest/)
+pycryptodome (https://www.pycryptodome.org/en/latest/)
 * Crypto.Cipher
 * Crypto.Random
 ```
@@ -26,8 +26,8 @@ Python 3 stdlib
 
 1. ```git clone https://github.com/sbassett29/PWL.git```
 2. ```pip install pycryptodome``` (if you haven't already)
-3. Set ```self.pwl_file_name``` on [line 22](https://github.com/sbassett29/PWL/blob/master/pwl#L22) to a valid file name.  You can run ```pwl -n``` for some suggestions.
-4. You'll want to select a random key to use to enc/dec the AES file that ```pwl``` creates.  You can run ```pwl -k``` for some suggestions (base64-encoded random byte strings.)
+3. Set ```self.pwl_file_name``` on [line 23](https://github.com/sbassett29/PWL/blob/master/pwl#L23) to a valid file name.  You can run ```pwl -n``` for some suggestions.
+4. You'll want to select a random key to use to enc/dec the AES file that ```pwl``` creates.  You can run ```pwl -k``` for some suggestions (base64-encoded random byte strings.)  DON'T LOSE THIS KEY, OBVIOUSLY!  You'll be prompted for it any time you wish to read/write data.
 5. Run ```pwl -h``` for help and options.
 
 ## Options
