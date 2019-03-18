@@ -1,41 +1,48 @@
 #!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 """ Pass Word Locker
-Author: sbassett@wikimedia.org
-License: ISC
+Author: sbassett@gmail.com
+License: CC0 <https://creativecommons.org/publicdomain/zero/1.0/>
 """
 
 import argparse
 import base64
 import os
 import secrets
+import subprocess
+from time import sleep
 
 from Crypto.Cipher import AES
 from Crypto.Random import get_random_bytes
-
 
 class PWL:
     """ Pass Word Locker """
     def __init__(self):
         """ Constructor """
         self.pwl_length = 16
-        self.pwl_file_name = '.8swV65BXefyU5E7vSJcNvg'
+        self.pwl_file_name = ''
         self.terminal_width = 120
         self.col_one_width = 28
         self.col_two_width = 28
         self.col_three_width = 60
         self.enc_dec_key = 0
         self.encoding = 'utf8'
-
-        self.check_pwl_file_name()
+        self.clear_list_time = 5
+        self.clear_list_cmd = '/usr/bin/clear && printf \'\e[3J\''
 
     def suggest_pwl_file_names(self):
         """ Suggest pwl file names """
-        print("Set one of these as the 'self.file_name' variable in script_init():\n")
-        print("(They're just random 16-char alnum strings from)\n")
+        print("Set one of these as the 'self.file_name' variable within the class constructor:\n")
+        print("(They're just random 16-char [a-zA-Z0-9\-\_] strings)\n")
         for i in range(self.pwl_length):
             print('.', end='')
             print(secrets.token_urlsafe(self.pwl_length))
+
+    def suggest_pwl_file_keys(self):
+        """ Suggest pwl file key vals (base64) """
+        print("Some suggested key values (base64(get_random_bytes(self.pwl_length)))\n")
+        for i in range(self.pwl_length):
+            print(base64.b64encode(get_random_bytes(self.pwl_length-5)).decode("utf-8"))
 
     def check_pwl_file_name(self):
         """ Check if pwl file exists, if not create it """
@@ -65,6 +72,8 @@ class PWL:
         self.enc_dec_key = input('Please enter a valid key: ')
         if(len(self.enc_dec_key) > self.pwl_length):
             raise ValueError("Key length is more than 16 characters!")
+        elif(len(self.pwl_file_name) < 1):
+            raise ValueError("File name does not exist or is invalid (self.pwl_file_name)")
         else:
             self.enc_dec_key = self.enc_dec_key.strip()\
                 .rjust(self.pwl_length)\
@@ -80,7 +89,7 @@ class PWL:
         key = self.enc_dec_key
         cipher = AES.new(key, AES.MODE_EAX)
         ciphertext, tag = cipher.encrypt_and_digest(
-            data.encode(self.encoding)
+            bytes(data, self.encoding)
         )
         file_out = open(self.pwl_file_name, "wb")
         [ file_out.write(x) for x in (cipher.nonce, tag, ciphertext) ]
@@ -111,6 +120,9 @@ class PWL:
                print(line.replace('|||', ''.join([shim, str(count), ')'])))
                self.print_pwl_hr()
                count += 1
+       if(self.clear_list_time > 0):
+           sleep(self.clear_list_time)
+           subprocess.run(self.clear_list_cmd, shell=True)
 
     def edit_pwl_file_line(self, line_num):
        """ Edit pwl file line (-e #) """
@@ -155,11 +167,13 @@ class PWL:
 
     def delete_pwl_file_line(self, line_num):
        """ Delete pwl file line (-d #) """
+       """ TODO: implement """
        self.prompt_for_pwl_key()
 
     def add_pwl_file_line(self):
        """ Add a new pwl file line (-a) """
        self.prompt_for_pwl_key()
+       """ TODO: add dec check here to abort if invalid key """
        asset = self.prompt_for_input('Please enter an Asset: ')
        while(len(asset) > self.col_one_width):
            asset = self.prompt_for_input('Please enter a shorter length Asset: ')
@@ -204,7 +218,16 @@ if __name__ == "__main__":
     parser.add_argument('-a', '--add', default='',
                         action='store_true',
                         help='add a pwl file line')
+    parser.add_argument('-n', '--names', default='',
+                        action='store_true',
+                        help='suggest pwl file names')
+    parser.add_argument('-k', '--keys', default='',
+                        action='store_true',
+                        help='suggest pwl file keys')
     args, unknown = parser.parse_known_args()
+
+    if(args.list or args.edit or args.delete or args.add):
+        pwl.check_pwl_file_name()
 
     if args.list:
         pwl.display_pwl_file_data()
@@ -214,5 +237,9 @@ if __name__ == "__main__":
         pwl.delete_pwl_file_line(args.delete)
     elif args.add:
         pwl.add_pwl_file_line()
+    elif args.names:
+        pwl.suggest_pwl_file_names()
+    elif args.keys:
+        pwl.suggest_pwl_file_keys()
     else:
         parser.print_help()
