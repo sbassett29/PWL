@@ -53,6 +53,12 @@ Again, see ```pwl -h```.  But basically, ```pwl -l``` displays the password data
 
 We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/sbassett29/PWL/tags).
 
+## Known Issues
+
+1. The delete option (```-d```) isn't implemented (though I had, guess not.)
+2. The current delimiter (|||) isn't great and should be changed or made configurable.
+3. All of the screen settings (widths, etc) are fixed.  This may or may not change.
+
 ## Authors
 
 * **Scott Bassett** - *Initial work* - [sbassett29](https://github.com/sbassett29)
