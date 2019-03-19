@@ -26,6 +26,7 @@ class PWL:
         self.col_two_width = 28
         self.col_three_width = 60
         self.enc_dec_key = 0
+        self.enc_dec_length = 16
         self.encoding = 'utf8'
         self.clear_list_time = 5
         self.clear_list_cmd = '/usr/bin/clear && printf \'\e[3J\''
@@ -40,15 +41,17 @@ class PWL:
 
     def suggest_pwl_file_keys(self):
         """ Suggest pwl file key vals (base64) """
-        print("Some suggested key values (base64(get_random_bytes(self.pwl_length)))\n")
-        for i in range(self.pwl_length):
-            print(base64.b64encode(get_random_bytes(self.pwl_length-5)).decode("utf-8"))
+        print("Some suggested key values (base64(get_random_bytes(self.enc_dec_length)))\n")
+        for i in range(self.enc_dec_length):
+            print(base64.b64encode(get_random_bytes(self.enc_dec_length)).decode("utf-8"))
 
     def check_pwl_file_name(self):
         """ Check if pwl file exists, if not create it """
         if(not os.path.isfile(self.pwl_file_name) or
            os.stat(self.pwl_file_name).st_size == 0):
-            self.prompt_for_pwl_key()
+            self.prompt_for_pwl_key(
+                'Please enter an initial base64 key value (and DO NOT LOSE IT!): '
+            )
             self.enc_pwl_file_data('')
 
     def print_pwl_header(self):
@@ -67,17 +70,17 @@ class PWL:
         """ Print horizontal rule """
         print(char * self.terminal_width) 
 
-    def prompt_for_pwl_key(self):
+    def prompt_for_pwl_key(self, msg=''):
         """ Prompt user for key for enc/dec """
-        self.enc_dec_key = input('Please enter a valid key: ')
-        if(len(self.enc_dec_key) > self.pwl_length):
-            raise ValueError("Key length is more than 16 characters!")
-        elif(len(self.pwl_file_name) < 1):
-            raise ValueError("File name does not exist or is invalid (self.pwl_file_name)")
+        if(msg == ''):
+            msg = 'Please enter a valid base64 key: '
+        self.enc_dec_key = str(input(msg)).strip()
+        if(len(base64.b64decode(self.enc_dec_key)) > self.enc_dec_length):
+            raise ValueError(''.join(
+                ['Key length is more than ', str(self.enc_dec_length), ' characters!']
+            ))
         else:
-            self.enc_dec_key = self.enc_dec_key.strip()\
-                .rjust(self.pwl_length)\
-                .encode(self.encoding)
+            return True
 
     def prompt_for_input(self, msg='please enter a value: '):
        """ Generic CLI user input prompt """
@@ -86,23 +89,28 @@ class PWL:
 
     def enc_pwl_file_data(self, data):
         """ Encrypt str data """
-        key = self.enc_dec_key
-        cipher = AES.new(key, AES.MODE_EAX)
+        cipher = AES.new(base64.b64decode(self.enc_dec_key), AES.MODE_EAX)
         ciphertext, tag = cipher.encrypt_and_digest(
-            bytes(data, self.encoding)
-        )
+            data.encode(self.encoding)
+        )   
         file_out = open(self.pwl_file_name, "wb")
-        [ file_out.write(x) for x in (cipher.nonce, tag, ciphertext) ]
+        [ file_out.write(x) for x in (
+            cipher.nonce,
+            tag,
+            ciphertext
+        ) ] 
 
     def dec_pwl_file_data(self):
         """ Decrypt str data """
         file_in = open(self.pwl_file_name, "rb")
         nonce, tag, ciphertext = [ file_in.read(x) for x in (
-            self.pwl_length, self.pwl_length, -1
-        ) ]
-        cipher = AES.new(self.enc_dec_key, AES.MODE_EAX, nonce)
-        return cipher.decrypt_and_verify(ciphertext, tag) \
-            .decode(self.encoding)
+            self.enc_dec_length, self.enc_dec_length, -1
+        ) ] 
+        cipher = AES.new(base64.b64decode(self.enc_dec_key), AES.MODE_EAX, nonce)
+        return cipher.decrypt_and_verify(
+            ciphertext,
+            tag 
+         ).decode(self.encoding)
 
     def display_pwl_file_data(self):
        """ Display pwl file data (-l) """
@@ -155,20 +163,40 @@ class PWL:
                     '| ',
                     password,
                     (' ' * (self.col_three_width - len(password) - 1)),
-                    '|'
-                    '\n'])
+                    '|'])
 
                 current_file_data[count - 1] = new_file_data
                 found = count
+                break
             count += 1
 
-       self.enc_pwl_file_data('\n'.join(current_file_data))
-       print(''.join(['Entry # ', str(found), ' has been changed.']))
+       if(found > 0):   
+           self.enc_pwl_file_data('\n'.join(current_file_data))
+           print(''.join(['Entry # ', str(found), ' has been changed.']))
+       else:        
+           print(''.join(['No entry for line # ', str(line_num), ' found within pwl file.']))
 
     def delete_pwl_file_line(self, line_num):
        """ Delete pwl file line (-d #) """
-       """ TODO: implement """
+       self.check_pwl_file_name()
        self.prompt_for_pwl_key()
+       current_file_data = self.dec_pwl_file_data().split('\n')
+
+       count = 1
+       found = 0
+       for line in current_file_data:
+           if(len(line.strip()) > 0):
+               if(int(line_num) == count):
+                   found = count
+                   break
+               count += 1
+
+       if(found > 0):
+           del current_file_data[found - 1]
+           self.enc_pwl_file_data('\n'.join(current_file_data))
+           print(''.join(['Entry # ', str(found), ' has been deleted.']))
+       else:
+           print(''.join(['No entry for line # ', str(line_num), ' found within pwl file.']))
 
     def add_pwl_file_line(self):
        """ Add a new pwl file line (-a) """

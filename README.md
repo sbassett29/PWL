@@ -41,13 +41,14 @@ There are a few options, set in the constructor for now (will probably turn into
 5. ```col_two_width``` - must be 28 for now
 6. ```col_three_width``` - must be 60 for now
 7. ```enc_dec_key``` - default, unusable value
+8. ```enc_dec_length``` - must be 16 for now
 8. ```encoding``` - utf8 please
 9. ```clear_list_time``` - optional time to clear screen after ```pwl -l```, set to 0 or less for more danger
 10. ```clear_list_cmd``` - whatever you use to clear your term, default is based upon macos terminal
 
 ## Usage
 
-Again, see ```pwl -h```.  But basically, ```pwl -l``` displays the password data to the terminal, ```pwl -a``` and  ```pwl -e``` add and edit data via a few prompts.   And ```pwl -d``` apparently isn't implemented yet :)  Oh, you'll probably want to alias the ```pwl``` file so you don't have to prepend "./" or whatever every time.
+Again, see ```pwl -h```.  But basically, ```pwl -l``` displays the password data to the terminal, ```pwl -a``` and  ```pwl -e {#}``` add and edit data via a few prompts.   And ```pwl -d {#}``` will delete an item, forever.  Oh, you'll probably want to alias the ```pwl``` file so you don't have to prepend "./" or whatever every time.
 
 ## Versioning
 
@@ -55,9 +56,8 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 ## Known Issues
 
-1. The delete option (```-d```) isn't implemented (though I had, guess not.)
-2. The current delimiter (|||) isn't great and should be changed or made configurable.
-3. All of the screen settings (widths, etc) are fixed.  This may or may not change.
+1. The current data delimiter (|||) isn't great and should be changed or made configurable.  Or just use JSON or YAML :)
+2. All of the screen settings (widths, etc) are fixed.  This may or may not change.
 
 ## Authors
 
