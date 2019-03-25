@@ -58,6 +58,7 @@ We use [SemVer](http://semver.org/) for versioning. For the versions available, 
 
 1. The current data delimiter (|||) isn't great and should be changed or made configurable.  Or just use JSON or YAML :)
 2. All of the screen settings (widths, etc) are fixed.  This may or may not change.
+3. Really only tested under MacOS (Mojave 10.14.3) at the moment.
 
 ## Authors
 
