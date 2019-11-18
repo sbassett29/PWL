@@ -29,7 +29,7 @@ class PWL:
         self.enc_dec_length = 16
         self.encoding = 'utf8'
         self.clear_list_time = 5
-        self.clear_list_cmd = '/usr/bin/clear && printf \'\e[3J\''
+        self.clear_list_cmd = '/usr/bin/reset'
 
     def suggest_pwl_file_names(self):
         """ Suggest pwl file names """
