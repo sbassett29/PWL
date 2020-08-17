@@ -21,7 +21,7 @@ pycryptodome (https://www.pycryptodome.org/en/latest/)
 * Crypto.Cipher
 * Crypto.Random
 ```
-Note: `pycryptodome` can be dropped or overwritten during various python3 upgrades.  If there any errors about python3 not being able to find anything under `Crypto`, you should 1) double-check that `pycryptodome` is installed for python3 2) and that it is not conflicting with older modules like `pycrypto` or `crypto`.  This may involve uninstalling older, conflicting modules and then uninstalling and re-installing `pycryptodome`.
+Note: `pycryptodome` can be dropped or overwritten during various python3 upgrades.  If you experience any errors about python3 not being able to find objects under the `Crypto` module, you should 1) double-check that `pycryptodome` is correctly installed for python3 and 2) that it is not conflicting with older modules like `pycrypto` or `crypto`.  This may involve uninstalling any older, conflicting modules and then uninstalling and re-installing `pycryptodome`.
 
 ## Installing
 
